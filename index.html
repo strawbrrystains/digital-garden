@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>my digital garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+  /* ---------------------------------------------------------------
+     
+     --------------------------------------------------------------- */
+
+  :root {
+    --paper: #EDEBE3;
+    --paper-raised: #F6F4EE;
+    --ink: #1E2226;
+    --ink-soft: #55585c;
+    --rule: #C9C4B8;
+    --rule-soft: #d9d5c9;
+    --grid-line: rgba(120, 150, 165, 0.28);
+    --accent: #7C8A4A;
+    --accent-2: #3E6B5C;
+    --accent-ink: #fdf6f4;
+    --shadow: rgba(30, 34, 38, 0.18);
+    --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --font-mono: "IBM Plex Mono", "Courier New", monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="light"]) {
+      --paper: #15161A;
+      --paper-raised: #1c1d22;
+      --ink: #EDEAE2;
+      --ink-soft: #a9a6a0;
+      --rule: #34353b;
+      --rule-soft: #2a2b30;
+      --grid-line: rgba(120, 150, 165, 0.16);
+      --accent: #A9B97E;
+      --accent-2: #6fa593;
+      --accent-ink: #1a1011;
+      --shadow: rgba(0, 0, 0, 0.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #15161A;
+    --paper-raised: #1c1d22;
+    --ink: #EDEAE2;
+    --ink-soft: #a9a6a0;
+    --rule: #34353b;
+    --rule-soft: #2a2b30;
+    --grid-line: rgba(120, 150, 165, 0.16);
+    --accent: #A9B97E;
+    --accent-2: #6fa593;
+    --accent-ink: #1a1011;
+    --shadow: rgba(0, 0, 0, 0.55);
+  }
+
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  * { margin: 0; padding: 0; }
+
+  body {
+    background: #0f1a14;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    min-height: 100%;
+  }
+  /* blurred copy of the photo fills any space around the garden */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -60px;
+    background: url("background.png") center / cover no-repeat;
+    filter: blur(28px) brightness(0.5);
+    z-index: -1;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: calc(1.1rem + env(safe-area-inset-top, 0px));
+    right: 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    background: rgba(15, 26, 20, 0.45);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(237, 234, 226, 0.35);
+    color: rgba(237, 234, 226, 0.85);
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    z-index: 20;
+  }
+  .theme-toggle:hover { border-color: #f4a6b4; color: #fff; }
+
+  .wordmark {
+    position: absolute;
+    top: 1.4rem;
+    left: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.02em;
+    color: rgba(237, 234, 226, 0.85);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    z-index: 5;
+  }
+
+  /* =================================================================
+     DESKTOP / TABLET — the garden
+     ================================================================= */
+
+  .board-wrap {
+    position: relative;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* covers the whole viewport like background-size: cover; anchored to the
+     bottom so any cropping takes sky, not flower stems */
+  .board {
+    position: relative;
+    flex-shrink: 0;
+    width: max(100vw, calc(100dvh * 2549 / 1709));
+    aspect-ratio: 2549 / 1709;
+    background: url("background.png") center / 100% 100% no-repeat;
+    overflow: hidden;
+    container-type: inline-size;
+  }
+
+  /* the button is only a wrapper; the flower head (.hit) takes the clicks,
+     so the transparent space around tall stems doesn't block neighbours */
+  .sticker {
+    position: absolute;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    pointer-events: none;
+    transform: rotate(var(--r, 0deg));
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+    transition: transform 0.25s ease, filter 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sticker:hover, .sticker:focus-visible {
+    transform: translateY(-6px) scale(1.05) rotate(var(--r, 0deg));
+    z-index: 6;
+  }
+  .sticker:focus-visible { outline: none; }
+  .sticker:focus-visible .hit { outline: 2px dashed #ffd3db; outline-offset: 4px; }
+  .sticker svg { display: block; width: 100%; height: auto; }
+  .sticker img, .decor img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transform-origin: 50% 100%;
+    animation: sway 7s ease-in-out infinite alternate;
+    animation-delay: var(--d, 0s);
+  }
+  .sticker.floating img, .decor img { transform-origin: 50% 50%; }
+  @keyframes sway {
+    from { transform: rotate(-1.6deg); }
+    to   { transform: rotate(1.6deg); }
+  }
+
+  .sticker .hit {
+    position: absolute;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+  }
+
+  .sticker .cap {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.3rem);
+    transform: translateX(-50%) rotate(calc(var(--r, 0deg) * -1));
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: #8f3a4a;
+    background: rgba(255, 244, 240, 0.92);
+    border: 1px solid #f4a6b4;
+    border-radius: 999px;
+    padding: 0.18rem 0.6rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+  .sticker:hover .cap, .sticker:focus-visible .cap { opacity: 1; }
+
+  .decor {
+    position: absolute;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+    pointer-events: none;
+  }
+  .decor svg { display: block; width: 100%; height: auto; }
+
+  .board-text {
+    position: absolute;
+    z-index: 4;
+    color: #EDEAE2;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  }
+  .board-text.headline {
+    left: 3.5%;
+    top: 40%;
+    display: flex;
+    align-items: baseline;
+    gap: 0.7cqw;
+    white-space: nowrap;
+  }
+  .board-text.headline .line1 {
+    font-size: clamp(1.1rem, 3cqw, 2.4rem);
+    font-weight: 500;    
+    font-style: italic;
+    line-height: 1.05;
+  }
+  .board-text.headline .line2 {
+    font-size: clamp(1.1rem, 3cqw, 2.4rem);
+    font-weight: 500;
+    font-style: italic;
+    line-height: 1.05;
+    color: #f4a6b4;
+  }
+  .board-text.about {
+    left: 3.5%;
+    top: 46%;
+    width: 24%;
+    font-size: clamp(0.7rem, 1.1cqw, 0.95rem);
+    line-height: 1.55;
+    font-family: var(--font-mono);
+    color: rgba(237, 234, 226, 0.88);
+  }
+  .board-text.about a { color: #f4a6b4; text-decoration: none; border-bottom: 1px solid currentColor; }
+  .board-text.about a:hover { color: #ffd3db; }
+
+  @media (min-width: 641px) {
+    body { overflow: hidden; }
+  }
+
+  /* =================================================================
+     MOBILE — plain list fallback
+     ================================================================= */
+
+  .list-wrap { display: none; }
+
+  @media (max-width: 640px) {
+    .board-wrap { display: none; }
+    .list-wrap {
+      display: block;
+      margin: 4rem 0.75rem 0;
+      padding: 1.6rem 1.15rem 2rem;
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .list-intro { margin-bottom: 2rem; }
+    .list-intro .name { font-size: 1.9rem; font-weight: 600; }
+    .list-intro .role { margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-soft); }
+    .list-intro .about { margin-top: 1.1rem; font-size: 0.95rem; line-height: 1.55; color: var(--ink-soft); }
+
+    section.index { border-top: 1px solid var(--rule); }
+    .index-heading {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 1.1rem 0 0.4rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-soft);
+    }
+
+    ul.pieces { list-style: none; }
+    .piece { border-bottom: 1px solid var(--rule); }
+    .piece button {
+      width: 100%; display: flex; align-items: baseline; gap: 0.85rem;
+      background: none; border: none; text-align: left; cursor: pointer;
+      padding: 0.9rem 0.05rem; color: var(--ink); font-family: var(--font-serif);
+    }
+    .piece .num {
+      font-family: var(--font-mono); font-size: 0.74rem; color: var(--ink-soft);
+      min-width: 1.6em; padding-top: 0.15em;
+    }
+    .piece .titles { flex: 1; min-width: 0; }
+    .piece .title { font-size: 1.02rem; font-weight: 500; }
+    .piece .hook { margin-top: 0.15rem; font-size: 0.86rem; color: var(--ink-soft); font-style: italic; }
+    .piece .tag {
+      align-self: center; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-soft);
+      border: 1px solid var(--rule); border-radius: 999px; padding: 0.2rem 0.55rem; white-space: nowrap;
+    }
+  }
+
+
+  /* ---------------- window overlay (same mechanic as the list version) ---------------- */
+
+  .scrim {
+    position: fixed; inset: 0;
+    background: rgba(20, 20, 18, 0.28);
+    backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.18s ease;
+    z-index: 40;
+  }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+
+  .window {
+    position: fixed; top: 50%; left: 50%;
+    width: min(560px, 92vw);
+    max-height: min(78vh, 720px);
+    background: var(--paper-raised);
+    border-radius: 10px;
+    box-shadow: 0 24px 60px var(--shadow), 0 2px 8px var(--shadow);
+    display: flex; flex-direction: column; overflow: hidden;
+    z-index: 41;
+    transform: translate(-50%, -46%) scale(0.96);
+    opacity: 0; pointer-events: none;
+    transition: transform 0.2s cubic-bezier(.2,.7,.3,1), opacity 0.18s ease;
+  }
+  .window.open { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
+
+  .window .titlebar {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--rule);
+    background: var(--paper); flex-shrink: 0;
+  }
+  .window .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-soft); border: 1px solid var(--rule); }
+  .window .filename {
+    flex: 1; font-family: var(--font-mono); font-size: 0.76rem; color: var(--ink-soft);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .window .close-btn {
+    background: none; border: none; font-family: var(--font-mono); font-size: 0.95rem;
+    line-height: 1; color: var(--ink-soft); cursor: pointer; padding: 0.15rem 0.4rem; border-radius: 5px;
+  }
+  .window .close-btn:hover { color: var(--accent-ink); background: var(--accent); }
+
+  .window .content { padding: 0 0 2rem; overflow-y: auto; overflow-x: auto; }
+  .window .content .inner { padding: 1.6rem 1.7rem 0; }
+
+  .window .hero {
+    width: 100%; aspect-ratio: 16 / 9; background: var(--rule-soft);
+    border-bottom: 1px solid var(--rule); overflow: hidden; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .window .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .window .hero svg { width: 34%; height: 34%; color: var(--ink-soft); }
+  .window .hero.tinted { background: color-mix(in srgb, var(--accent-2) 22%, var(--paper-raised)); }
+
+  .window .tag {
+    display: inline-block; font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent);
+    border: 1px solid var(--accent); border-radius: 999px; padding: 0.2rem 0.6rem; margin-bottom: 1rem;
+  }
+  .window h2 { font-size: 1.35rem; font-weight: 600; line-height: 1.3; margin-bottom: 0.9rem; }
+  .window .body { font-size: 1rem; line-height: 1.7; color: var(--ink); white-space: pre-wrap; }
+  .window .body a { color: var(--accent-2); }
+  .window .body a:hover { color: var(--accent); }
+  .window .note {
+    margin-top: 1.4rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+    font-family: var(--font-mono); font-size: 0.76rem; color: var(--ink-soft);
+  }
+
+  @media (max-width: 520px) {
+    .window { width: 94vw; max-height: 82vh; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .window, .scrim, .sticker { transition: none; }
+    .sticker img, .decor img { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">aa / ●</button>
+
+  <!-- ===================== DESKTOP: scattered board ===================== -->
+  <div class="board-wrap">
+    <div class="board" id="board" aria-label="Scattered index of writing samples — click any item to open it">
+      <!-- stickers + decor + text are injected by JS -->
+    </div>
+  </div>
+
+  <!-- ===================== MOBILE: plain list ===================== -->
+  <div class="list-wrap">
+    <div class="list-intro">
+      <div class="name">Emma Frazer</div>
+      <div class="role">copywriter — storytelling, world building, & character development</div>
+      <p class="about">A mix of client work and personal projects, made with love and americanos. Projects under NDA have been anonymised. Click anything below to open it.</p>
+    </div>
+    <section class="index">
+      <div class="index-heading">
+        <span>selected works</span>
+        <span id="pieceCount"></span>
+      </div>
+      <ul class="pieces" id="pieceList"></ul>
+    </section>
+  </div>
+
+
+  <div class="scrim" id="scrim"></div>
+  <div class="window" id="window" role="dialog" aria-modal="true" aria-labelledby="windowTitle">
+    <div class="titlebar">
+      <span class="dot"></span>
+      <span class="filename" id="windowFilename">piece.txt</span>
+      <button class="close-btn" id="closeBtn" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="content">
+      <div class="hero" id="windowHero"></div>
+      <div class="inner">
+        <span class="tag" id="windowTag">tag</span>
+        <h2 id="windowTitle">Title</h2>
+        <div class="body" id="windowBody">Body</div>
+        <div class="note" id="windowNote"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+  /* =================================================================
+     ICONS 
+     ================================================================= */
+
+  const IMG = {
+    "flower 1.png": "flowies/flower 1.png",
+    "flower 2.png": "flowies/flower 2.png",
+    "flower 3.png": "flowies/flower 3.png",
+    "flower 4.png": "flowies/flower 4.png",    
+    "flower 5.png": "flowies/flower 5.png",
+    "flower 6.png": "flowies/flower 6.png",
+    "flower 7.png": "flowies/flower 7.png",
+    "flower 8.png": "flowies/flower 8.png",
+    "sub flower.png": "flowies/sub flower.png"
+
+  };
+
+  /* =================================================================
+     PIECES
+     ================================================================= */
+
+  const PIECES = [
+    {
+      tag: "copy", icon: "disco", image: IMG["flower 1.png"],
+      title: "website rework & event description for Motherland",
+      hook: "Motherland modifications", filename: "motherland-modi.txt",
+      body: "An immersive, all-day, full sensory experience. Indulge in an exciting, all-star South African showcase. \n\nWith our love for connection and appreciation for South African rhythms, we have come together to create a truly transformative gathering. We've blended all the best of our local flavours to make a lineup that will feed the mind and soothe the soul. This annual pilgrimage is a cathartic experience for the loyal and privileged audience.\n\nThe primary purpose of Motherland Festival is to honour and showcase the exceptional talent of South Africa. Motherland is not only promoting local artists but also providing a platform for them to shine on a global stage. Our vision is to create an intimate, unique, and elevated event that will quickly become a calendar highlight for the community. \n\nAs the festival continues to grow and evolve, we hope to attract larger lineups and audiences, contributing to the development and recognition of South African music and culture. Motherland Festival will continuously promote and preserve the rich musical heritage of our home. \n\nHosting the festival at The Cradle Boutique Hotel in Maropeng has great historical and cultural significance. For information on their conservation efforts, please see their about page.",
+      note: "I edited all the copy on the website for a local music festival called Motherland. I ensured consistency across their website and their notifications to attendees. Although the event was cancelled, the mission of the brand connects with me deeply as I believe music is the crux of community.",
+      pos: { left: 77.4, top: 58.7, width: 18.6, rotate: 0 }, head: { x: 58, y: 36, r: 34 }
+    },
+    {
+      tag: "identity", icon: "coffee", image: IMG["flower 2.png"],
+      title: "cafe menu rework",
+      hook: "cafe menu rework", filename: "sidehustle.txt",
+      body: "<b>Cape Town Fog</b>; <i>the taste of home.</i> \nA fig and rooibos-flavoured matcha, made with fig jam and rooibos-steeped milk. \n\n<b>Cool as a Cuuc</b>; <i>nothing better than nature's best.</i> \nA refreshing cucumber syrup made in-house, mixed with litchi juice and coconut water for a cooling spritz, topped with sparkling water. \n\n<b>Bakoven Bevvie</b>; <i>made for a beach day, enjoyed every day.</i> \nOur best matcha poured over a mango and vanilla jam. We recommend coconut milk to go with! \n\n<b>Headfirst</b>; <i>almost as refreshing as a Saunder’s cold plunge, just slightly less salty.</i> \nA gentle honey and sea salt syrup, available with matcha or espresso-based drinks. \n\n<b>Real Hustler</b>; <i>life gets crazy, and sometimes only a caffeine kick can get you through.</i> \nA local cold brew complemented with a delicate hazelnut and caramel syrup, available black or white.",
+      note: "Concept for a cafe menu redesign. Crafted drinks and copy for a seasonal menu idea. Also taught them how to make the syrups. I wear hats and aprons!",
+      pos: { left: 67.3, top: 69.7, width: 11.4, rotate: 0 }, head: { x: 62, y: 32, r: 36 }
+
+    }, 
+    {
+      tag: "identity", icon: "helio", image: IMG["flower 3.png"],
+      title: "perfume brand concept",
+      hook: "perfume brand concept", filename: "helio-concept.txt",
+      body: "Inspired by <i>The Roses of Heliogabalus</i>, <b>Helio</b> is an indie perfumery focused on capturing the complexities of coming-of-age in a single spray. Each perfume is brought to fruition by a memory, or maybe a fiction, or maybe a dream; who can ever be sure? \n\nBelow are six perfumes created to follow a wearer through the year, intended to be bought in a set of six travel-size sprays. \n\n<b>Touch and Go</b> — warmth, intimacy, fire. \nFalling in love on a whim is as rare as it is stupid. Which is to say, plenty. But before I knew it, you held my heart in your hands. Wrapped in sheets, lit by a candle, I knew tomorrow you’d be gone. Forever is a long time, but at least we have right now. \nScent notes: <i>pistachio, pink pepper, cashmere.</i> \n\n<b>Moon Drenched</b> — luck, joy, cold. \nI dance down the empty street with my heartbeat keeping my footsteps in time. I wink at the moon; I click my heels to the stars. Another gin and tonic in another rooftop bar. I wonder if this magic is how pirates felt seeing bioluminescence for the first time. Someone yells that I’ll catch my death dancing in the fresh snow. I tell them I know; I tell them there’s no point living if there’s no reason to dance, and tonight, I have twenty. \nScent notes: <i>juniper, snow, cedar.</i> \n\n<b>Treehouse</b> — youthfulness, dewy, crunchy. \nThe end of summer is never anyone’s favourite time. Maybe it would be if it didn’t mean going back to it all. There’s no denying the world when the cold comes in. But there is a place, a place only I can go, where the world is wild and sweet. It exists outside the realms of everyone else. Only accessible to those who know the forest, who know which branches to step on that won’t give way, who know that the best things are the ones only you can reach; there’s a treehouse waiting for them. There you’ll find me hiding from the rain and the world. \nScent notes: <i>chamomile, carrot, rain, cucumber.</i> \n\n<b>Honeysuckle on the Courtyard</b> — sweet, sour, breezy. \nI remember how the trees sounded the day I broke my nose. The cicadas rustled with the wind, and as I stared through the gaps in the trees, all I could taste was metal. Nature created a quiet hum as the tennis ball bounced to a stop next to me. The blood drip mixed with the peach iced tea stain on my once-clean linen shirt. The fall hurt worse than the hit. I don’t know how long I was lying down for. It can’t have been long before hands reached out for me to grab, but while I was there, looking through the branches towards the sky, I felt extremely calm, like for once the world stood still just for me. \nScent notes: <i>pear blossom, honeysuckle, tennis ball, linen, patchouli.</i> \n\n<b>Achilles Heel</b> —  dry, salty, hopeful. \nThey say when you know, you know. Sitting in the dry grass, skin dried with ocean salt, with sticky hands from fruit and honey, I knew there was simply no other place in the world for me than this orchard, this summer, this body next to me. \nScent notes: <i>fig, sea salt, pomegranate, olive, honey, cypress.</i> \n\n<b>Herb Garden</b> — caffeinated, herby, trying. \nEveryone said it wouldn’t work; we were mad for trying it. Some pairs just aren’t made to last. You can fight and scream and push against it, but sometimes the world just knows to keep you separated, whether by distance or by time. “It’s better for everyone if you leave it alone now,” they’ll tell me. But I can’t. All I can do now is keep adding another slice of lemon and a sprig of mint to my coffee. We know what we like. It only needs to make sense to us. \nScent notes: <i>lemon, elderflower, coffee, mint, basil.</i>",
+      note: "This is a concept built for a perfume brand that never came to be. The idea was to have every perfume rooted in reality, in a story that could be yours or mine. The creator believes perfume is the heartbeat of memory.",
+      pos: { left: 47.8, top: 56.4, width: 19, rotate: 0 }, head: { x: 44, y: 29, r: 42 }
+    },
+    {
+      tag: "social", icon: "social media", image: IMG["flower 4.png"],
+      title: "social media work",
+      hook: "social media work", filename: "socials.txt",
+      body: "<b>Matcha brand rework:</b> \nFocus on community, peace, and health. \n<b>Campaign concept one:</b> Event loyalty cards \nEveryone knows about a normal cafe loyalty card, but what do you do when you don’t have a physical location? Host events and have punch cards for those. The more events someone attends, the more stamps they get, bringing them closer to a free loyalty gift, like merch, a promo code, or product. This connects with the focus on community. The loyal follower of this brand attends events, meets new people, and builds their village. The biggest goal for all the campaigns should be on the building up the local community and business. Campaigns should be social and encourage engagement. We want people to feel like they can show up as they are, like they would any other day, and enjoy the community and the products naturally. \n<b>Campaign concept two:</b> Matcha Made in Heaven \nPartnering with local brands and establishments to bring matcha to the masses. Think a monthly book club at an independent bookstore, film nights at small movie houses, arts and crafts afternoons at coffee shops, fitness mornings at boutique studios, all with matcha products, pastries, and drinks available for purchase. The brand is there and functions as the organiser, but isn’t over the top or in anyone’s face.",
+      note: "Social media campaigns, concepts, and copy written for a variety of brands.",
+      pos: { left: 28.6, top: 54.7, width: 20, rotate: 0 }, head: { x: 44, y: 36, r: 34 }
+    },
+    {
+      tag: "creative", icon: "reviews", image: IMG["flower 5.png"],
+      title: "misc. reviews",
+      hook: "misc. reviews", filename: "reviews.txt",
+      body: "<b>Materialists by Celine Song</b> \nWhat you get with <i>Materialists</i> is not the punchy, over-the-top romcom you might've expected, but rather a slow burn on a question a lot of people struggle with. Through very luscious colouring, a lilty score and soundtrack, and thoughtful dialogue, you get a sweet, intimate look into a very generous love story. They were an easy couple to root for, and I can't wait to root for them again. I’m sure this is a movie I'll be rewatching again, probably many, many times. Make more movies that are just simply nice, please. It subverted my expectations, and initially, I was a bit upset, but as time grows, so does my love for it. Of course, you'll have people who choose the Harrys of the world and have perfectly happy marriages. But sometimes the answer is yes, love is enough. \n\n<b>When The Rain Stops by Maison Margiela</b> \nIt smells like fresh earth, petrichor and wet florals. The moss, the rose, the pepper. It's like I dreamed of this fragrance. It smells like when you left the window open on a rainy night when you were a kid — a smell you spend your life chasing like the air on the morning of a field trip or the Scholastic book fair. If you love scents that remind you of being outside or maybe of a childhood spent running through sprinklers and flower bushes, this is one for you. I'd recommend this to botanists and people who want to smell like a memory. \n\n<b>A Thousand Blues by Cheon Seon Rae</b> \nThe author writes in her author's note that she had initially set out to write a grand sci-fi, but she couldn't, so she wrote what she knew. She talks about how her shoes wear out quickly, and someone told her it's because she walks too fast. She wrote <i>A Thousand Blues</i> around a note she had written in her phone: We all need to practice slowing down. She ends the note with how, after writing the book, she's been practising slowing down so her hurrying feet do not step on an ant walking by. \nJoy will only come when we look for it. Coli has a conversation with Bogyeong, the mother of the two girls, about how time moves differently for different people. What you're going through will change how you experience time. He suggests that the best way to stop time from freezing, to make life move forward, is to focus on \"tiny joys,\" which will make you start experiencing the time you're living in. What pulled me out of the worst time of my life was not some grand event or solution. It was slow and tidal. It was focusing on the good things that happened, no matter how small. I've had very few truly bad days since then. Shifting your mindset to focus on the tiny joys is hard, but it is vital for a happy life. \nI think of the quote from <i>About Time</i> about how instead of reliving every day twice, he lives every day like it's the one he intentionally went back to relive. It's true that in a world where you can access everything all at once, the thing you need to access most is your own time. We run out of time to look after ourselves so easily. It's time to slow down and look for our tiny joys. \n\n<b>Virgin by Lorde</b> \n<i>Virgin</i> is self-referential, raw, and in your face. In an interview promoting the project, she said pop music at its best is so cathartic. And that’s what makes Lorde’s music so special. She takes her time and reaches into her darkest depths and pulls it out for us to revel in. \nShe describes <i>Virgin</i> as being about purity, not necessarily sexual purity, but of things untainted and essential. Catharsis comes from the Greek word katharos, meaning pure. Love a good etymological link.",
+      note: "A collection of some reviews I've written.",
+      pos: { left: 16.6, top: 67, width: 12.4, rotate: 0 }, head: { x: 37, y: 32, r: 36 }
+    },
+    {
+      tag: "identity", icon: "leaf", image: IMG["flower 6.png"],
+      title: "cottage copy",
+      hook: "cottage copy", filename: "lilac-rabbit.txt",
+      body: "Nestled away in the serene Lake District is a home away from home. \n\nLilac Rabbit Cottage is designed with nature in mind, using eco-conscious methods to wrap its guests in its tranquil surroundings. Reconnect with your roots and enjoy your rest away from all the hustle and bustle of the city.  \n\nEach room offers a view and privacy, complemented by luxurious finishes, local touches, and sustainable materials. There’s a natural pool and eco-friendly sauna. Included in every stay is a basket of complimentary snacks from local vendors, the softest robe you’ll ever feel, and a map of hidden gems and trails to enjoy over your stay. \nWhile there is internet connectivity, it is not fast. We recommend using this time to take a break from the outside world and enjoy the quiet the mountains have to offer. There is an extensive library as well as a DVD player and a selection of films to use. \n\n<b>Colours for assets:</b> oat milk, french lavender, soft sage, fig skin, pine needle. \n\n<b>Values:</b> warmth, nature, rewilding  \n\n<b>Vocabulary to pull:</b> eco-conscious, rewilding, welcoming, peaceful, calm, serene, charming  \n\n<b>Priorities for socials:</b> organic photography, not overly edited or stylised, guestbook entries, positive climate news, film photography, green green green! \n\n<b>Email template:</b> appears like a handwritten postcard, introducing discounts or events to keep an eye on, sending updates re: bookings",
+      note: "Worked with a small cottage running as a guesthouse in a lakeside town to improve brand identity.",
+      pos: { left: 1, top: 70.7, width: 12.7, rotate: 0 }, head: { x: 55, y: 30, r: 44 }
+    },
+    {
+      tag: "cv", icon: "star", image: IMG["flower 7.png"],
+      title: "cv",
+      hook: "cv", filename: "ef-cv.txt",
+      body: "<b>Work experience \n\nSocial Discovery Group \nJune 2024 - ongoing</b> \nLocalisation Team Manager & Content Writer \nManage a team of eleven translators to work on localisation. Develop and deliver promotional, creative, and internal content for brands and businesses, with a focus on mobile and web applications, under the Social Discovery Group portfolio. Develop automation software to expedite dataset annotation and editing to increase productivity. Launched new email marketing campaigns to improve user retention and successfully doubled conversion rates. Customise bot behaviours and web content to align with the cultural nuances and emotional preferences of target markets. Craft website copy and promotional event descriptions designed to enhance user experience, drive user acquisition, and increase profitability. \n\n<b>Pixelogic Media \nFeb 2022 - May 2024</b> \nLocalisation Editor \nResponsible for creating, editing and quality-checking translation scripts and subtitles for major production companies such as Disney+ and Apple TV. Worked on high-profile projects like <i>The Bear, Abbott Elementary</i>, and <i>Only Murders in the Building</i>. Responsible for researching and annotating scripts for accuracy in translation. Aided in the training and upskilling of fellow editors. Experience in dialogue scripts, SDH, CC, and TMP files. Experience in SubEdit programme. Expertise in the Chicago Manual of Style. \n\n<b>Freelance Writer and Editor \nOngoing</b> \nPartner with brands and agencies to craft website copy, event content, and marketing materials that strengthen brand identity, enhance user experience, and drive acquisition and profitability. Co-host writing and craft workshops to help other writers hone their skills. Provide academic editing services for theses, dissertations, and essays, ensuring clarity, structure, and academic rigour. Write and develop narratives and characters for video games, creating immersive, interactive player experiences. Experience in short film scriptwriting, transcription and subtitling. Partnered with <a href=\"https://www.vhaistudios.com/\" target=\"_blank\" rel=\"noopener noreferrer\">VHAI studios</a> for copywriting and editing on social media content and website copy.  \n\n<b>Academia Student Residence \nFebruary - November 2021</b> \nHead of Sustainability and Social Impact. \nOrganised events, indabas, and drives focused on sustainability, equality, and student empowerment. Regularly posted informative content on the residence's social media pages, including a recycling initiative campaign, beach cleanups, Q&As with experts, and workshops. Introduced a composting system to the residence and created social content and physical posters for the system. \n\n<b>Education \n\nUniversity of Stellenbosch</b> \nBacherlor of Arts in Humanities\n2019-2021 \nMajor in Linguistics and Applied English Language Studies \nMinor in Psychology\n\n<b>The TEFL Academy</b> \nTEFL Level 5 Certificate \n2021 \n\n<b>University of Cape Town</b> \nCopy Editing Course \n2025",
+      note: "github is the new linkedin",
+      pos: { left: 71.1, top: 31.2, width: 9.4, rotate: 0 }, head: { x: 50, y: 50, r: 46 }, floating: true
+    },
+    {
+      tag: "about me", icon: "me", image: IMG["flower 8.png"],
+      title: "personal details",
+      hook: "personal bio", filename: "bio.txt",
+      body: "A jack of all trades and maybe a master of one or two things. Professionally, I am a freelance writer and editor, and in my free time, I’m a passionate reader, musician, and movie lover. I've played guitar and bass for thirteen years. I have a Bachelor's degree in Humanities, focused in Linguistics and Psychology. I speak English and French, with smatterings of Spanish and Italian. I can code in HTML and Python (slowly, but I did make this website from scratch!). \n\nI think it’s very easy to get caught up in the world and where you’re meant to be at what age and all that, but for now, my goals are simple: consume more of what makes me happy and share my life with my loved ones. I know the rest will fall into place. As Kate Bush said, I just know that something good is gonna happen.",
+      note: "I love a walk. A career highlight was being on the subtitling team for The Bear. I’m a summer girl. I’m a Leo sun, moon, rising, venus, and mars, and it definitely shows. ENFJ-A. ",
+      pos: { left: 88, top: 35.8, width: 9.4, rotate: 0 }, head: { x: 50, y: 50, r: 46 }, floating: true
+    },
+    {
+      tag: "creative", icon: "browser", image: IMG["sub flower.png"],
+      title: "i write for fun on the reg!",
+      hook: "my substack!", filename: "strawberrystains.txt",
+      body: "read more at <a href=\"https://strawberrystains.substack.com\" target=\"_blank\" rel=\"noopener noreferrer\">strawberrystains.substack.com</a>",
+      note: "i write essays, reviews, musings, and monthly postcards.",
+      pos: { left: 66.3, top: 49.5, width: 8.9, rotate: 0 }, head: { x: 50, y: 50, r: 46 }, floating: true
+    },
+    ];
+
+  /* PIECES_MOBILE */
+  const PIECES_MOBILE = [
+    {
+      tag: "identity",
+      title: "perfumery mockup",
+      hook: "Helio.",
+      filename: "helio-concept.txt",
+      body: "Inspired by <i>The Roses of Heliogabalus</i>, <b>Helio</b> is an indie perfumery focused on capturing the complexities of coming-of-age in a single spray. Each perfume is brought to fruition by a memory, or maybe a fiction, or maybe a dream; who can ever be sure? \n\nBelow are six perfumes created to follow a wearer through the year, intended to be bought in a set of six travel-size sprays. \n\n<b>Touch and Go</b> — warmth, intimacy, fire. \nFalling in love on a whim is as rare as it is stupid. Which is to say, plenty. But before I knew it, you held my heart in your hands. Wrapped in sheets, lit by a candle, I knew tomorrow you’d be gone. Forever is a long time, but at least we have right now. \nScent notes: <i>pistachio, pink pepper, cashmere.</i> \n\n<b>Moon Drenched</b> — luck, joy, cold. \nI dance down the empty street with my heartbeat keeping my footsteps in time. I wink at the moon; I click my heels to the stars. Another gin and tonic in another rooftop bar. I wonder if this magic is how pirates felt seeing bioluminescence for the first time. Someone yells that I’ll catch my death dancing in the fresh snow. I tell them I know; I tell them there’s no point living if there’s no reason to dance, and tonight, I have twenty. \nScent notes: <i>juniper, snow, cedar.</i> \n\n<b>Treehouse</b> — youthfulness, dewy, crunchy. \nThe end of summer is never anyone’s favourite time. Maybe it would be if it didn’t mean going back to it all. There’s no denying the world when the cold comes in. But there is a place, a place only I can go, where the world is wild and sweet. It exists outside the realms of everyone else. Only accessible to those who know the forest, who know which branches to step on that won’t give way, who know that the best things are the ones only you can reach; there’s a treehouse waiting for them. There you’ll find me hiding from the rain and the world. \nScent notes: <i>chamomile, carrot, rain, cucumber.</i> \n\n<b>Honeysuckle on the Courtyard</b> — sweet, sour, breezy. \nI remember how the trees sounded the day I broke my nose. The cicadas rustled with the wind, and as I stared through the gaps in the trees, all I could taste was metal. Nature created a quiet hum as the tennis ball bounced to a stop next to me. The blood drip mixed with the peach iced tea stain on my once-clean linen shirt. The fall hurt worse than the hit. I don’t know how long I was lying down for. It can’t have been long before hands reached out for me to grab, but while I was there, looking through the branches towards the sky, I felt extremely calm, like for once the world stood still just for me. \nScent notes: <i>pear blossom, honeysuckle, tennis ball, linen, patchouli.</i> \n\n<b>Achilles Heel</b> —  dry, salty, hopeful. \nThey say when you know, you know. Sitting in the dry grass, skin dried with ocean salt, with sticky hands from fruit and honey, I knew there was simply no other place in the world for me than this orchard, this summer, this body next to me. \nScent notes: <i>fig, sea salt, pomegranate, olive, honey, cypress.</i> \n\n<b>Herb Garden</b> — caffeinated, herby, trying. \nEveryone said it wouldn’t work; we were mad for trying it. Some pairs just aren’t made to last. You can fight and scream and push against it, but sometimes the world just knows to keep you separated, whether by distance or by time. “It’s better for everyone if you leave it alone now,” they’ll tell me. But I can’t. All I can do now is keep adding another slice of lemon and a sprig of mint to my coffee. We know what we like. It only needs to make sense to us. \nScent notes: <i>lemon, elderflower, coffee, mint, basil.</i>",
+      note: "This is a concept built for a perfume brand that never came to be. The idea was to have every perfume rooted in reality, in a story that could be yours or mine. The creator believes perfume is the heartbeat of memory."
+    },
+    {
+      tag: "copy",
+      title: "reviews",
+      hook: "Mixed — personal.",
+      filename: "reviews.txt",
+      body: "<b>Materialists by Celine Song</b> \nWhat you get with <i>Materialists</i> is not the punchy, over-the-top romcom you might've expected, but rather a slow burn on a question a lot of people struggle with. Through very luscious colouring, a lilty score and soundtrack, and thoughtful dialogue, you get a sweet, intimate look into a very generous love story. They were an easy couple to root for, and I can't wait to root for them again. I’m sure this is a movie I'll be rewatching again, probably many, many times. Make more movies that are just simply nice, please. It subverted my expectations, and initially, I was a bit upset, but as time grows, so does my love for it. Of course, you'll have people who choose the Harrys of the world and have perfectly happy marriages. But sometimes the answer is yes, love is enough. \n\n<b>When The Rain Stops by Maison Margiela</b> \nIt smells like fresh earth, petrichor and wet florals. The moss, the rose, the pepper. It's like I dreamed of this fragrance. It smells like when you left the window open on a rainy night when you were a kid — a smell you spend your life chasing like the air on the morning of a field trip or the Scholastic book fair. If you love scents that remind you of being outside or maybe of a childhood spent running through sprinklers and flower bushes, this is one for you. I'd recommend this to botanists and people who want to smell like a memory. \n\n<b>A Thousand Blues by Cheon Seon Rae</b> \nThe author writes in her author's note that she had initially set out to write a grand sci-fi, but she couldn't, so she wrote what she knew. She talks about how her shoes wear out quickly, and someone told her it's because she walks too fast. She wrote <i>A Thousand Blues</i> around a note she had written in her phone: We all need to practice slowing down. She ends the note with how, after writing the book, she's been practising slowing down so her hurrying feet do not step on an ant walking by. \nJoy will only come when we look for it. Coli has a conversation with Bogyeong, the mother of the two girls, about how time moves differently for different people. What you're going through will change how you experience time. He suggests that the best way to stop time from freezing, to make life move forward, is to focus on \"tiny joys,\" which will make you start experiencing the time you're living in. What pulled me out of the worst time of my life was not some grand event or solution. It was slow and tidal. It was focusing on the good things that happened, no matter how small. I've had very few truly bad days since then. Shifting your mindset to focus on the tiny joys is hard, but it is vital for a happy life. \nI think of the quote from <i>About Time</i> about how instead of reliving every day twice, he lives every day like it's the one he intentionally went back to relive. It's true that in a world where you can access everything all at once, the thing you need to access most is your own time. We run out of time to look after ourselves so easily. It's time to slow down and look for our tiny joys. \n\n<b>Virgin by Lorde</b> \n<i>Virgin</i> is self-referential, raw, and in your face. In an interview promoting the project, she said pop music at its best is so cathartic. And that’s what makes Lorde’s music so special. She takes her time and reaches into her darkest depths and pulls it out for us to revel in. \nShe describes <i>Virgin</i> as being about purity, not necessarily sexual purity, but of things untainted and essential. Catharsis comes from the Greek word katharos, meaning pure. Love a good etymological link.",
+      note: "A collection of reviews I've written."
+    },
+    {
+      tag: "copy",
+      title: "website rework & event description",
+      hook: "Motherland Modifications.",
+      filename: "motherland-modi.txt",
+      body: "An immersive, all-day, full sensory experience. Indulge in an exciting, all-star South African showcase. \n\nWith our love for connection and appreciation for South African rhythms, we have come together to create a truly transformative gathering. We've blended all the best of our local flavours to make a lineup that will feed the mind and soothe the soul. This annual pilgrimage is a cathartic experience for the loyal and privileged audience.\n\nThe primary purpose of Motherland Festival is to honour and showcase the exceptional talent of South Africa. Motherland is not only promoting local artists but also providing a platform for them to shine on a global stage. Our vision is to create an intimate, unique, and elevated event that will quickly become a calendar highlight for the community. \n\nAs the festival continues to grow and evolve, we hope to attract larger lineups and audiences, contributing to the development and recognition of South African music and culture. Motherland Festival will continuously promote and preserve the rich musical heritage of our home. \n\nHosting the festival at The Cradle Boutique Hotel in Maropeng has great historical and cultural significance. For information on their conservation efforts, please see their about page.",
+      note: "I edited all the copy on the website for a local music festival called Motherland. I ensured consistency across their website and their notifications to attendees. Although the event was cancelled, the mission of the brand connects with me deeply as I believe music is the crux of community."
+    },
+    {
+      tag: "identity",
+      title: "cafe menu rework",
+      hook: "Side Hustle.",
+      filename: "sidehustle.txt",
+      body: "<b>Cape Town Fog</b>; <i>the taste of home.</i> \nA fig and rooibos-flavoured matcha, made with fig jam and rooibos-steeped milk. \n\n<b>Cool as a Cuuc</b>; <i>nothing better than nature's best.</i> \nA refreshing cucumber syrup made in-house, mixed with litchi juice and coconut water for a cooling spritz, topped with sparkling water. \n\n<b>Bakoven Bevvie</b>; <i>made for a beach day, enjoyed every day.</i> \nOur best matcha poured over a mango and vanilla jam. We recommend coconut milk to go with! \n\n<b>Headfirst</b>; <i>almost as refreshing as a Saunder’s cold plunge, just slightly less salty.</i> \nA gentle honey and sea salt syrup, available with matcha or espresso-based drinks. \n\n<b>Real Hustler</b>; <i>life gets crazy, and sometimes only a caffeine kick can get you through.</i> \nA local cold brew complemented with a delicate hazelnut and caramel syrup, available black or white.",
+      note: "Concept for a cafe menu redesign. Crafted drinks and copy for a seasonal menu idea. Also taught them how to make the syrups. I wear hats and aprons!",
+    },
+    {
+      tag: "socials",
+      title: "collection of social media work",
+      hook: "Mixed clients.",
+      filename: "socials.txt",
+      body: "<b>Matcha brand rework:</b> \nFocus on community, peace, and health. \n<b>Campaign concept one:</b> Event loyalty cards \nEveryone knows about a normal cafe loyalty card, but what do you do when you don’t have a physical location? Host events and have punch cards for those. The more events someone attends, the more stamps they get, bringing them closer to a free loyalty gift, like merch, a promo code, or product. This connects with the focus on community. The loyal follower of this brand attends events, meets new people, and builds their village. The biggest goal for all the campaigns should be on the building up the local community and business. Campaigns should be social and encourage engagement. We want people to feel like they can show up as they are, like they would any other day, and enjoy the community and the products naturally. \n<b>Campaign concept two:</b> Matcha Made in Heaven \nPartnering with local brands and establishments to bring matcha to the masses. Think a monthly book club at an independent bookstore, film nights at small movie houses, arts and crafts afternoons at coffee shops, fitness mornings at boutique studios, all with matcha products, pastries, and drinks available for purchase. The brand is there and functions as the organiser, but isn’t over the top or in anyone’s face.",
+      note: "Social media campaigns, concepts, and copy written for a variety of brands."
+    },
+    {
+      tag: "identity",
+      title: "website copy",
+      hook: "Lilac Rabbit Cottage.",
+      filename: "lilac-rabbit-cottage.txt",
+      body: "Nestled away in the serene Lake District is a home away from home. \n\nLilac Rabbit Cottage is designed with nature in mind, using eco-conscious methods to wrap its guests in its tranquil surroundings. Reconnect with your roots and enjoy your rest away from all the hustle and bustle of the city.  \n\nEach room offers a view and privacy, complemented by luxurious finishes, local touches, and sustainable materials. There’s a natural pool and eco-friendly sauna. Included in every stay is a basket of complimentary snacks from local vendors, the softest robe you’ll ever feel, and a map of hidden gems and trails to enjoy over your stay. \nWhile there is internet connectivity, it is not fast. We recommend using this time to take a break from the outside world and enjoy the quiet the mountains have to offer. There is an extensive library as well as a DVD player and a selection of films to use. \n\n<b>Colours for assets:</b> oat milk, french lavender, soft sage, fig skin, pine needle.  \n\n<b>Values:</b> warmth, nature, rewilding  \n\n<b>Vocabulary to pull:</b> eco-conscious, rewilding, welcoming, peaceful, calm, serene, charming  \n\n<b>Priorities for socials:</b> organic photography, not overly edited or stylised, guestbook entries, positive climate news, film photography, green green green! \n\n<b>Email template:</b> appears like a handwritten postcard, introducing discounts or events to keep an eye on, sending updates re: bookings",
+      note: "Worked with a small cottage running as a guesthouse in a lakeside town to improve brand identity."
+    }, 
+    {
+      tag: "cv",
+      title: "cv",
+      hook: "Job experience and education.", 
+      filename: "ef-cv.txt",
+      body: "<b>Work experience \n\nSocial Discovery Group \nJune 2024 - ongoing</b> \nLocalisation Team Manager & Content Writer \nManage a team of eleven translators to work on localisation. Develop and deliver promotional, creative, and internal content for brands and businesses, with a focus on mobile and web applications, under the Social Discovery Group portfolio. Develop automation software to expedite dataset annotation and editing to increase productivity. Launched new email marketing campaigns to improve user retention and successfully doubled conversion rates. Customise bot behaviours and web content to align with the cultural nuances and emotional preferences of target markets. Craft website copy and promotional event descriptions designed to enhance user experience, drive user acquisition, and increase profitability. \n\n<b>Pixelogic Media \nFeb 2022 - May 2024</b> \nLocalisation Editor \nResponsible for creating, editing and quality-checking translation scripts and subtitles for major production companies such as Disney+ and Apple TV. Worked on high-profile projects like <i>The Bear, Abbott Elementary</i>, and <i>Only Murders in the Building</i>. Responsible for researching and annotating scripts for accuracy in translation. Aided in the training and upskilling of fellow editors. Experience in dialogue scripts, SDH, CC, and TMP files. Experience in SubEdit programme. Expertise in the Chicago Manual of Style. \n\n<b>Freelance Writer and Editor \nOngoing</b> \nPartner with brands and agencies to craft website copy, event content, and marketing materials that strengthen brand identity, enhance user experience, and drive acquisition and profitability. Co-host writing and craft workshops to help other writers hone their skills. Provide academic editing services for theses, dissertations, and essays, ensuring clarity, structure, and academic rigour. Write and develop narratives and characters for video games, creating immersive, interactive player experiences. Experience in short film scriptwriting, transcription and subtitling. Partnered with <a href=\"https://www.vhaistudios.com/\" target=\"_blank\" rel=\"noopener noreferrer\">VHAI studios</a> for copywriting and editing on social media content and website copy.  \n\n<b>Academia Student Residence \nFebruary - November 2021</b> \nHead of Sustainability and Social Impact. \nOrganised events, indabas, and drives focused on sustainability, equality, and student empowerment. Regularly posted informative content on the residence's social media pages, including a recycling initiative campaign, beach cleanups, Q&As with experts, and workshops. Introduced a composting system to the residence and created social content and physical posters for the system. \n\n<b>Education \n\nUniversity of Stellenbosch</b> \nBacherlor of Arts in Humanities\n2019-2021 \nMajor in Linguistics and Applied English Language Studies \nMinor in Psychology\n\n<b>The TEFL Academy</b> \nTEFL Level 5 Certificate \n2021 \n\n<b>University of Cape Town</b> \nCopy Editing Course \n2025",
+      note: "github is the new linkedin",
+    }
+  ];
+
+  const DECOR = [
+    ];
+
+  /* ---------------- shared helpers ---------------- */
+
+  function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function escapeAttr(str) {
+    return String(str).replace(/"/g, '&quot;');
+  }
+  function stickerInner(item) {
+    return item.image
+      ? `<img src="${escapeAttr(item.image)}" alt="" onerror="this.parentElement.innerHTML=window.__icon('${item.icon}')">`
+      : window.__icon(item.icon);
+  }
+  // no ICONS defined yet, so a missing image just leaves the slot empty
+  window.__icon = (key) => (typeof ICONS !== 'undefined' && ICONS[key]) || '';
+
+  /* ---------------- build desktop board ---------------- */
+
+  const board = document.getElementById('board');
+
+  DECOR.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'decor';
+    el.style.left = d.pos.left + '%';
+    el.style.top = d.pos.top + '%';
+    el.style.width = d.pos.width + '%';
+    el.style.transform = `rotate(${d.pos.rotate}deg)`;
+    el.style.setProperty('--d', '-2.5s');
+    el.innerHTML = d.image ? `<img src="${escapeAttr(d.image)}" alt="">` : window.__icon(d.icon);
+    board.appendChild(el);
+  });
+
+  PIECES.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sticker' + (p.floating ? ' floating' : '');
+    btn.setAttribute('data-index', i);
+    btn.setAttribute('aria-label', p.title);
+    btn.style.left = p.pos.left + '%';
+    btn.style.top = p.pos.top + '%';
+    btn.style.width = p.pos.width + '%';
+    btn.style.setProperty('--r', p.pos.rotate + 'deg');
+    btn.style.setProperty('--d', (-i * 1.3) + 's');
+    const head = p.head || { x: 50, y: 50, r: 50 };
+    btn.innerHTML = stickerInner(p) +
+      `<span class="hit" style="left:${head.x}%;top:${head.y}%;width:${head.r * 2}%">` +
+      `<span class="cap">${escapeHTML(p.hook)}</span></span>`;
+    btn.addEventListener('click', () => openPiece(p));
+    board.appendChild(btn);
+  });
+
+  const aboutText = document.createElement('div');
+  aboutText.className = 'board-text about';
+  aboutText.innerHTML = 'a collection of client work and personal projects, made with love and americanos. projects under NDA have been anonymised. click a flower!<br><br><a href="mailto:emma_frazer@hotmail.co.uk">mail me!</a>';
+  board.appendChild(aboutText);
+
+  const headlineText = document.createElement('div');
+  headlineText.className = 'board-text headline';
+  headlineText.innerHTML = `<div class="line1">writing</div><div class="line2">portfolio</div>`;
+  board.appendChild(headlineText);
+
+  /* ---------------- build mobile list ---------------- */
+
+  const list = document.getElementById('pieceList');
+  document.getElementById('pieceCount').textContent = `(${PIECES_MOBILE.length})`;
+
+  PIECES_MOBILE.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.className = 'piece';
+    const num = String(i + 1).padStart(2, '0');
+    li.innerHTML = `
+      <button type="button" data-index="${i}">
+        <span class="num">${num}</span>
+        <span class="titles">
+          <span class="title">${escapeHTML(p.title)}</span>
+          <span class="hook">${escapeHTML(p.hook)}</span>
+        </span>
+        <span class="tag">${escapeHTML(p.tag)}</span>
+      </button>
+    `;
+    list.appendChild(li);
+  });
+  list.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-index]');
+    if (btn) openPiece(PIECES_MOBILE[Number(btn.dataset.index)]);
+  });
+
+  /* ---------------- window ---------------- */
+
+  const win = document.getElementById('window');
+  const scrim = document.getElementById('scrim');
+  let lastFocused = null;
+
+  function openPiece(p) {
+    const hero = document.getElementById('windowHero');
+    hero.style.display = 'none';
+    document.getElementById('windowFilename').textContent = p.filename || 'piece.txt';
+    document.getElementById('windowTag').textContent = p.tag;
+    document.getElementById('windowTitle').textContent = p.title;
+    document.getElementById('windowBody').innerHTML = p.body;
+    const noteEl = document.getElementById('windowNote');
+    if (p.note) { noteEl.textContent = p.note; noteEl.style.display = 'block'; }
+    else { noteEl.style.display = 'none'; }
+    lastFocused = document.activeElement;
+    win.classList.add('open');
+    scrim.classList.add('open');
+    win.querySelector('.close-btn').focus();
+  }
+
+  function closeWindow() {
+    win.classList.remove('open');
+    scrim.classList.remove('open');
+    if (lastFocused) lastFocused.focus();
+  }
+
+  document.getElementById('closeBtn').addEventListener('click', closeWindow);
+  scrim.addEventListener('click', closeWindow);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && win.classList.contains('open')) closeWindow();
+  });
+
+  /* ---------------- theme toggle: system -> light -> dark ---------------- */
+  const root = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  let themeState = 'system';
+  toggle.addEventListener('click', () => {
+    themeState = themeState === 'system' ? 'light' : themeState === 'light' ? 'dark' : 'system';
+    if (themeState === 'system') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', themeState);
+    toggle.textContent = themeState === 'system' ? 'aa / ●' : themeState === 'light' ? 'aa / ○' : 'aa / ●●';
+  });
+</script>
+
+</body>
+</html>
